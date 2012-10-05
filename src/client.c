@@ -2145,6 +2145,20 @@ client_server_versions(struct client *c, struct result_object *o)
   return client_execute(c);
 }
 
+void
+client_get_server_status(struct client *c, int server_index,
+		int *server_was_needed, int *server_not_available,
+		int *total_failure_count)
+{
+  struct server *s;
+
+  s = array_elem(c->servers, struct server, server_index);
+  *server_was_needed = s->server_was_needed;
+  *server_not_available = s->server_not_available;
+  *total_failure_count = s->total_failure_count;
+}
+
+
 
 /*
   When noreply mode is enabled the client may send the last noreply

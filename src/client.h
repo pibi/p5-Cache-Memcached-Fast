@@ -203,5 +203,10 @@ extern
 int
 client_server_versions(struct client *c, struct result_object *o);
 
+extern
+void
+client_get_server_status(struct client *c, int server_index,
+		int *server_was_needed, int *server_not_available,
+		int *total_failure_count);
 
 #endif /* ! CLIENT_H */

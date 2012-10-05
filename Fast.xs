@@ -1335,10 +1335,41 @@ disconnect_all(memd)
 int
 max_size_exceeded_count(memd, ...)
         Cache_Memcached_Fast *  memd
-    PREINIT:
     CODE:
         RETVAL = memd->max_size_exceeded_count;
         if (items > 1)
             memd->max_size_exceeded_count = SvIV(ST(1));
     OUTPUT:
         RETVAL
+
+AV *
+server_stats(memd)
+        Cache_Memcached_Fast *memd
+    PREINIT:
+        int i, n;
+        int server_was_needed, server_not_available, total_failure_count;
+        SV *host_port;
+        SV **svp;
+    CODE:
+        RETVAL = newAV();
+        sv_2mortal((SV *)RETVAL);
+        n = av_len(memd->servers) + 1;
+        av_fill(RETVAL, n-1);
+        for (i = 0; i < n; ++i) {
+            client_get_server_status(memd->c, i, &server_was_needed, &server_not_available, &total_failure_count);
+
+            svp = av_fetch(memd->servers, i, 0);
+            if (svp == NULL)
+                warn("Got invalid server no. %i from Cache::Memcached::Fast server list", (int)i);
+            else {
+                HV *srv_info = newHV();
+                av_store(RETVAL, i, newRV_noinc((SV *)srv_info));
+                hv_stores(srv_info, "server", newSVsv(*svp));
+                hv_stores(srv_info, "num_interactions", newSViv(server_was_needed));
+                hv_stores(srv_info, "num_not_available", newSViv(server_not_available));
+                hv_stores(srv_info, "num_failures", newSViv(total_failure_count));
+            }
+        }
+    OUTPUT:
+        RETVAL
+
