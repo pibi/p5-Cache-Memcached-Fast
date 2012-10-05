@@ -201,6 +201,9 @@ struct server
   size_t host_len;
   char *port;
   int failure_count;
+  int total_failure_count;
+  int server_was_needed;
+  int server_not_available;
   time_t failure_expires;
   struct command_state cmd_state;
 };
@@ -237,6 +240,9 @@ server_init(struct server *s, struct client *c,
 
   s->failure_count = 0;
   s->failure_expires = 0;
+  s->total_failure_count = 0;
+  s->server_was_needed = 0;
+  s->server_not_available = 0;
 
   if (command_state_init(&s->cmd_state, c, noreply) != 0)
     return MEMCACHED_FAILURE;
@@ -1160,6 +1166,8 @@ client_mark_failed(struct client *c, struct server *s)
         s->cmd_state.buf;
     }
 
+  ++s->total_failure_count;
+
   if (c->max_failures > 0)
     {
       time_t now = time(NULL);
@@ -1605,14 +1613,17 @@ get_server_fd(struct client *c, struct server *s)
 {
   struct command_state *state;
 
+  ++s->server_was_needed;
   /*
     Do not try to try reconnect if had max_failures and
     failure_expires time is not reached yet.
   */
   if (c->max_failures > 0 && s->failure_count >= c->max_failures)
     {
-      if (time(NULL) <= s->failure_expires)
+      if (time(NULL) <= s->failure_expires) {
+        ++s->server_not_available;
         return -1;
+      }
       else
         s->failure_count = 0;
     }
