@@ -35,6 +35,7 @@ struct xs_state
   SV *deserialize_method;
   int utf8;
   size_t max_size;
+  int max_size_exceeded_count;
 };
 
 typedef struct xs_state Cache_Memcached_Fast;
@@ -326,6 +327,8 @@ parse_config(Cache_Memcached_Fast *memd, HV *conf)
     memd->max_size = SvUV(*ps);
   else
     memd->max_size = 1024 * 1024;
+
+  memd->max_size_exceeded_count = 0;
 
   parse_compress(memd, conf);
   parse_serialize(memd, conf);
@@ -726,8 +729,10 @@ set(memd, ...)
         sv = serialize(memd, sv, &flags);
         sv = compress(memd, sv, &flags);
         buf = (void *) SvPV(sv, buf_len);
-        if (buf_len > memd->max_size)
+        if (buf_len > memd->max_size) {
+          ++memd->max_size_exceeded_count;
           XSRETURN_EMPTY;
+        }
         if (items > arg)
           {
             /* exptime doesn't have to be defined.  */
@@ -815,8 +820,10 @@ set_multi(memd, ...)
             sv = serialize(memd, sv, &flags);
             sv = compress(memd, sv, &flags);
             buf = (void *) SvPV(sv, buf_len);
-            if (buf_len > memd->max_size)
+            if (buf_len > memd->max_size) {
+              ++memd->max_size_exceeded_count;
               continue;
+            }
             if (av_len(av) >= arg)
               {
                 /* exptime doesn't have to be defined.  */
