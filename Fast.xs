@@ -1330,3 +1330,15 @@ disconnect_all(memd)
     PROTOTYPE: $
     CODE:
         client_reinit(memd->c);
+
+
+int
+max_size_exceeded_count(memd, ...)
+        Cache_Memcached_Fast *  memd
+    PREINIT:
+    CODE:
+        RETVAL = memd->max_size_exceeded_count;
+        if (items > 1)
+            memd->max_size_exceeded_count = SvIV(ST(1));
+    OUTPUT:
+        RETVAL
