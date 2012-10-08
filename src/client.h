@@ -203,10 +203,16 @@ extern
 int
 client_server_versions(struct client *c, struct result_object *o);
 
+/* Retrieve server stats metrics */
 extern
 void
-client_get_server_status(struct client *c, int server_index,
+client_get_server_stats(struct client *c, int server_index,
 		int *server_was_needed, int *server_not_available,
 		int *total_failure_count);
+
+/* Reset server stats metrics */
+extern
+void
+client_reset_server_stats(struct client *c, int server_index);
 
 #endif /* ! CLIENT_H */

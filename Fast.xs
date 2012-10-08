@@ -1356,7 +1356,7 @@ server_stats(memd)
         n = av_len(memd->servers) + 1;
         av_fill(RETVAL, n-1);
         for (i = 0; i < n; ++i) {
-            client_get_server_status(memd->c, i, &server_was_needed, &server_not_available, &total_failure_count);
+            client_get_server_stats(memd->c, i, &server_was_needed, &server_not_available, &total_failure_count);
 
             svp = av_fetch(memd->servers, i, 0);
             if (svp == NULL)
@@ -1373,3 +1373,13 @@ server_stats(memd)
     OUTPUT:
         RETVAL
 
+void
+reset_server_stats(memd)
+        Cache_Memcached_Fast *memd
+    PREINIT:
+        int i, n;
+    CODE:
+        n = av_len(memd->servers) + 1;
+        for (i = 0; i < n; ++i) {
+            client_reset_server_stats(memd->c, i);
+        }

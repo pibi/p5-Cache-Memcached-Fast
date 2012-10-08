@@ -9,7 +9,7 @@ use lib "$FindBin::Bin";
 use Memd;
 
 if ($Memd::memd) {
-    plan tests => 4 + 5 * scalar(@Memd::addr);
+    plan tests => 6 + 5 * scalar(@Memd::addr);
 } else {
     plan skip_all => 'Not connected';
 }
@@ -40,4 +40,13 @@ foreach my $i (0..$#Memd::addr) {
         ok(defined($srv->{$key}), "single server stats hash hash key '$key'");
     }
 }
+
+my $ntotal_req = 0;
+$ntotal_req += $_->{num_interactions} for @{ $Memd::memd->server_stats };
+cmp_ok($ntotal_req, '>', 0, "Stats actually contain some data");
+
+$Memd::memd->reset_server_stats;
+$ntotal_req = 0;
+$ntotal_req += $_->{num_interactions} for @{ $Memd::memd->server_stats };
+is($ntotal_req, 0, "Stats contain no data after reset");
 

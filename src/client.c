@@ -2146,7 +2146,7 @@ client_server_versions(struct client *c, struct result_object *o)
 }
 
 void
-client_get_server_status(struct client *c, int server_index,
+client_get_server_stats(struct client *c, int server_index,
 		int *server_was_needed, int *server_not_available,
 		int *total_failure_count)
 {
@@ -2156,6 +2156,17 @@ client_get_server_status(struct client *c, int server_index,
   *server_was_needed = s->server_was_needed;
   *server_not_available = s->server_not_available;
   *total_failure_count = s->total_failure_count;
+}
+
+void
+client_reset_server_stats(struct client *c, int server_index)
+{
+  struct server *s;
+
+  s = array_elem(c->servers, struct server, server_index);
+  s->server_was_needed    = 0;
+  s->server_not_available = 0;
+  s->total_failure_count  = 0;
 }
 
 
