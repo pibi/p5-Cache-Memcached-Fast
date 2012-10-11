@@ -1230,6 +1230,53 @@ I<Return:> nothing.
 # See Fast.xs.
 
 
+=item C<server_stats>
+
+  my $stats = $memd->server_stats;
+  # or:
+  my $old_stats = $memd->server_stats(1); # reset!
+
+Fetches the per-server usage and success statistics.
+The returned array reference contains a hash ref per server,
+the host:port of the server being accessible from the C<server>
+key. The C<num_interactions> key indicates the number of round-trips
+made to the server. C<num_failures> is a count of the interactions
+that failed. C<num_not_available> is a count of the interactions that
+were not attempted because of previous/recent hard failure.
+In other words, the number of successful interactions is C<num_interactions>
+minus C<num_failures> and C<num_not_available>.
+
+Calling the method with a single, true argument resets all server
+stats, but still returns the old stats.
+
+I<Return:> Reference to an array containing a hash reference of stats
+per server.
+
+=cut
+
+# See Fast.xs.
+
+
+=item C<max_size_exceeded_count>
+
+  my $count = $memd->max_size_exceeded_count;
+  # or:
+  my $old_count= $memd->max_size_exceeded_count(1); # reset!
+
+Fetches the number of 'set' type operations that failed due to the
+buffer/packet size exceeding the configured maximum size.
+
+Calling the method with a single, true argument resets the
+count, but still returns the old count.
+
+I<Return:> Integer indicating the number size-exceeded errors
+since the most recent reset.
+
+=cut
+
+# See Fast.xs.
+
+
 1;
 
 __END__
