@@ -1,0 +1,17 @@
+.*.swo
+.*.swp
+*~
+META.*
+MYMETA.*
+Fast.c
+Fast.bs
+*.o
+pm_to_blib
+Makefile
+blib
+src/Makefile
+src/compute_crc32.c
+src/compute_crc32.h
+src/parse_keyword.c
+src/parse_keyword.h
+src/libclient.a
