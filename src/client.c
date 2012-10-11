@@ -201,11 +201,9 @@ struct server
   size_t host_len;
   char *port;
   int failure_count;
-  int total_failure_count;
-  int server_was_needed;
-  int server_not_available;
   time_t failure_expires;
   struct command_state cmd_state;
+  struct server_stats stats;
 };
 
 
@@ -240,9 +238,9 @@ server_init(struct server *s, struct client *c,
 
   s->failure_count = 0;
   s->failure_expires = 0;
-  s->total_failure_count = 0;
-  s->server_was_needed = 0;
-  s->server_not_available = 0;
+  s->stats.total_failure_count = 0;
+  s->stats.server_was_needed = 0;
+  s->stats.server_not_available = 0;
 
   if (command_state_init(&s->cmd_state, c, noreply) != 0)
     return MEMCACHED_FAILURE;
@@ -1166,7 +1164,7 @@ client_mark_failed(struct client *c, struct server *s)
         s->cmd_state.buf;
     }
 
-  ++s->total_failure_count;
+  ++s->stats.total_failure_count;
 
   if (c->max_failures > 0)
     {
@@ -1613,7 +1611,7 @@ get_server_fd(struct client *c, struct server *s)
 {
   struct command_state *state;
 
-  ++s->server_was_needed;
+  ++s->stats.server_was_needed;
   /*
     Do not try to try reconnect if had max_failures and
     failure_expires time is not reached yet.
@@ -1621,7 +1619,7 @@ get_server_fd(struct client *c, struct server *s)
   if (c->max_failures > 0 && s->failure_count >= c->max_failures)
     {
       if (time(NULL) <= s->failure_expires) {
-        ++s->server_not_available;
+        ++s->stats.server_not_available;
         return -1;
       }
       else
@@ -2145,30 +2143,14 @@ client_server_versions(struct client *c, struct result_object *o)
   return client_execute(c);
 }
 
-void
-client_get_server_stats(struct client *c, int server_index,
-		int *server_was_needed, int *server_not_available,
-		int *total_failure_count)
+
+struct server_stats *
+client_get_server_stats(struct client *c, int server_index)
 {
   struct server *s;
-
   s = array_elem(c->servers, struct server, server_index);
-  *server_was_needed = s->server_was_needed;
-  *server_not_available = s->server_not_available;
-  *total_failure_count = s->total_failure_count;
+  return &s->stats;
 }
-
-void
-client_reset_server_stats(struct client *c, int server_index)
-{
-  struct server *s;
-
-  s = array_elem(c->servers, struct server, server_index);
-  s->server_was_needed    = 0;
-  s->server_not_available = 0;
-  s->total_failure_count  = 0;
-}
-
 
 
 /*

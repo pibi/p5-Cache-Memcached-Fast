@@ -87,6 +87,14 @@ struct meta_object
   cas_type cas;
 };
 
+/* Per-server usage/success stats struct */
+struct server_stats
+{
+  int total_failure_count;  /* total hard failures for server */
+  int server_was_needed;    /* total roundtrips to server */
+  int server_not_available; /* total times a server was not available
+                             * due to previous failure */
+};
 
 extern
 struct client *
@@ -205,14 +213,7 @@ client_server_versions(struct client *c, struct result_object *o);
 
 /* Retrieve server stats metrics */
 extern
-void
-client_get_server_stats(struct client *c, int server_index,
-		int *server_was_needed, int *server_not_available,
-		int *total_failure_count);
-
-/* Reset server stats metrics */
-extern
-void
-client_reset_server_stats(struct client *c, int server_index);
+struct server_stats *
+client_get_server_stats(struct client *c, int server_index);
 
 #endif /* ! CLIENT_H */

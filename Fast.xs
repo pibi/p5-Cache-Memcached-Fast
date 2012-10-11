@@ -1337,26 +1337,30 @@ max_size_exceeded_count(memd, ...)
         Cache_Memcached_Fast *  memd
     CODE:
         RETVAL = memd->max_size_exceeded_count;
-        if (items > 1)
-            memd->max_size_exceeded_count = SvIV(ST(1));
+        if (items > 1 && SvTRUE(ST(1)))
+            memd->max_size_exceeded_count = 0;
     OUTPUT:
         RETVAL
 
 AV *
-server_stats(memd)
+server_stats(memd, ...)
         Cache_Memcached_Fast *memd
     PREINIT:
         int i, n;
-        int server_was_needed, server_not_available, total_failure_count;
         SV *host_port;
         SV **svp;
+        struct server_stats *stats;
+        int do_reset;
     CODE:
+        do_reset = (items > 1 && SvTRUE(ST(1))) ? 1 : 0;
+        n = av_len(memd->servers) + 1;
+
         RETVAL = newAV();
         sv_2mortal((SV *)RETVAL);
-        n = av_len(memd->servers) + 1;
         av_fill(RETVAL, n-1);
+
         for (i = 0; i < n; ++i) {
-            client_get_server_stats(memd->c, i, &server_was_needed, &server_not_available, &total_failure_count);
+            stats = client_get_server_stats(memd->c, i);
 
             svp = av_fetch(memd->servers, i, 0);
             if (svp == NULL)
@@ -1365,21 +1369,16 @@ server_stats(memd)
                 HV *srv_info = newHV();
                 av_store(RETVAL, i, newRV_noinc((SV *)srv_info));
                 hv_stores(srv_info, "server", newSVsv(*svp));
-                hv_stores(srv_info, "num_interactions", newSViv(server_was_needed));
-                hv_stores(srv_info, "num_not_available", newSViv(server_not_available));
-                hv_stores(srv_info, "num_failures", newSViv(total_failure_count));
+                hv_stores(srv_info, "num_interactions", newSViv(stats->server_was_needed));
+                hv_stores(srv_info, "num_not_available", newSViv(stats->server_not_available));
+                hv_stores(srv_info, "num_failures", newSViv(stats->total_failure_count));
+            }
+            if (do_reset) {
+                stats->server_not_available = 0;
+                stats->server_was_needed    = 0;
+                stats->total_failure_count  = 0;
             }
         }
     OUTPUT:
         RETVAL
 
-void
-reset_server_stats(memd)
-        Cache_Memcached_Fast *memd
-    PREINIT:
-        int i, n;
-    CODE:
-        n = av_len(memd->servers) + 1;
-        for (i = 0; i < n; ++i) {
-            client_reset_server_stats(memd->c, i);
-        }

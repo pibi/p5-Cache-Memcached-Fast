@@ -45,7 +45,7 @@ my $ntotal_req = 0;
 $ntotal_req += $_->{num_interactions} for @{ $Memd::memd->server_stats };
 cmp_ok($ntotal_req, '>', 0, "Stats actually contain some data");
 
-$Memd::memd->reset_server_stats;
+$Memd::memd->server_stats(1);
 $ntotal_req = 0;
 $ntotal_req += $_->{num_interactions} for @{ $Memd::memd->server_stats };
 is($ntotal_req, 0, "Stats contain no data after reset");
